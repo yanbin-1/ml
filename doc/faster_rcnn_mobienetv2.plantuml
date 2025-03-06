@@ -1,0 +1,52 @@
+@startuml
+
+interface train_mobilenetv2.main{}
+note right: 训练入口函数
+
+
+class my_dataset.VOCDataSet {
+    + __init__(): void  // 初始化函数
+    + __len__(): int // 返回数据集数量
+    + __getitem__(): tuple // 
+    + get_height_and_width(): tuple // 返回一个图像的高宽
+}
+note right of my_dataset.VOCDataSet
+    初始化函数
+    1. 检查train或者test数据集中xml文件中是否都存在object
+    2. 加载分类json
+end note
+
+
+class Dataset{}
+note right: torch Dataset类
+
+
+package train_utils{
+    interface group_by_aspect_ratio.create_aspect_ratio_groups{
+    }
+    note right of group_by_aspect_ratio.create_aspect_ratio_groups
+        1. 计算所有数据集中的图片width/height比例
+        2. 将[0.5, 2]区间划分成2*k等份(2k+1个点，2k个区间)
+        3. 统计所有图像比例在bins区间中的位置索引
+        4. 统计每个区间的频次
+    end note
+
+    class GroupedBatchSampler{
+        == 自定义的批次采样器 ==
+        + __init__(): void // 属性赋予
+        + __iter__(): list
+    }
+    note right of GroupedBatchSampler
+        1. 根据之前划分的bin区间索引，构建hash表记录落在同一个bin的数据集的数量，当该数量到达batch_size时，yield
+        2. 对于剩余不够batch_size的bin中的数据集，调用_repeat_to_at_least将其重复
+    end note
+}
+
+
+train_mobilenetv2.main ..> my_dataset.VOCDataSet
+
+Dataset <|-- my_dataset.VOCDataSet
+
+train_mobilenetv2.main ..> train_utils
+
+@enduml
