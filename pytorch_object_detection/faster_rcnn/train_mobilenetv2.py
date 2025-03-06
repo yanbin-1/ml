@@ -10,7 +10,7 @@ from backbone import MobileNetV2, vgg
 from my_dataset import VOCDataSet
 from train_utils import GroupedBatchSampler, create_aspect_ratio_groups
 from train_utils import train_eval_utils as utils
-from torchvision.models.detection.faster_rcnn import FasterRCNN
+
 
 def create_model(num_classes):
     # https://download.pytorch.org/models/vgg16-397923af.pth
@@ -55,7 +55,7 @@ def main():
         "val": transforms.Compose([transforms.ToTensor()])
     }
 
-    VOC_root = os.path.join(os.path.dirname(__file__), "../../data_set") # VOCdevkit
+    VOC_root = os.path.join(os.path.dirname(__file__), "../../data_set")  # VOCdevkit
     aspect_ratio_group_factor = 3
     batch_size = 8
     amp = False  # 是否使用混合精度训练，需要GPU支持
@@ -72,7 +72,7 @@ def main():
     # 是否按图片相似高宽比采样图片组成batch
     # 使用的话能够减小训练时所需GPU显存，默认使用
     if aspect_ratio_group_factor >= 0:
-        train_sampler = torch.utils.data.RandomSampler(train_dataset)
+        train_sampler = torch.utils.data.RandomSampler(train_dataset)  # 打乱顺序
         # 统计所有图像高宽比例在bins区间中的位置索引
         group_ids = create_aspect_ratio_groups(train_dataset, k=aspect_ratio_group_factor)
         # 每个batch图片从同一高宽比例区间中取
@@ -81,7 +81,7 @@ def main():
     nw = min([os.cpu_count(), batch_size if batch_size > 1 else 0, 8])  # number of workers
     print('Using %g dataloader workers' % nw)
 
-    # 注意这里的collate_fn是自定义的，因为读取的数据包括image和targets，不能直接使用默认的方法合成batch
+    # 注意这里的collate_fn是自定义的，因为读取的数据包括image和targets，不能直接使用默认的方法合成batch，因为上面VOCDataSet中__getitem__返回的是image, target，而DataLoader中传入的需要是[image1, image2, ...], [target1, target2, ...]，所以需要collate_fn
     if train_sampler:
         # 如果按照图片高宽比采样图片，dataloader中需要使用batch_sampler
         train_data_loader = torch.utils.data.DataLoader(train_dataset,
@@ -107,7 +107,7 @@ def main():
                                                   num_workers=nw,
                                                   collate_fn=val_dataset.collate_fn)
 
-    # create model num_classes equal background + 20 classes
+    # create model num_classes equal background + 20 classes  # TODO: 阅读至此
     model = create_model(num_classes=21)
     # print(model)
 

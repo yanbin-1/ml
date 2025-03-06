@@ -180,7 +180,7 @@ def _quantize(x, bins):
     bins = copy.deepcopy(bins)
     bins = sorted(bins)
     # bisect_right：寻找y元素按顺序应该排在bins中哪个元素的右边，返回的是索引
-    quantized = list(map(lambda y: bisect.bisect_right(bins, y), x))
+    quantized = list(map(lambda y: bisect.bisect_right(bins, y), x))  # 相当于[bisect.bisect_right(bins, i) for i in x]
     return quantized
 
 
